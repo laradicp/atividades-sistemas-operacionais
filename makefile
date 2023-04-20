@@ -1,0 +1,28 @@
+# compiler
+CC=g++
+
+# compiler flags
+CFLAGS=-c -Wall
+LDFLAGS=
+
+# source files
+SOURCES=$(wildcard src/*.cpp)
+
+# object files
+OBJECTS=$(addprefix obj/, $(notdir $(SOURCES:.cpp=.o)))
+
+# executable
+EXECUTABLE=scheduler.exe
+
+all: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+obj/%.o: src/%.cpp
+	$(CC) $(CFLAGS) $< -o $@
+
+clean:
+	rm -f obj/*.o $(EXECUTABLE)
+
+.PHONY: all clean
