@@ -14,7 +14,11 @@ OBJECTS=$(addprefix obj/, $(notdir $(SOURCES:.cpp=.o)))
 # executable
 EXECUTABLE=scheduler.exe
 
-all: $(EXECUTABLE)
+# create obj directory if it does not exist
+MKDIR_P = mkdir -p
+.PHONY: directories
+
+all: directories $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ -o $@
@@ -22,7 +26,10 @@ $(EXECUTABLE): $(OBJECTS)
 obj/%.o: src/%.cpp
 	$(CC) $(CFLAGS) $< -o $@
 
+directories:
+	${MKDIR_P} obj
+
 clean:
 	rm -f obj/*.o $(EXECUTABLE)
 
-.PHONY: all clean
+.PHONY: all clean directories
