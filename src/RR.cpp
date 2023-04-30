@@ -6,57 +6,91 @@
 
 #define QUANTUM 2
 
+/*
+    Brainstorm
+    - if process arrives at same time as another process finishes executing in quantum,
+        process arriving has greater priority
+    - queue of processes
+    - if the queue is empty, then time max(first arrival time, 0)
+    - push processes with arrival time == current time into queue
+    - pop process from queue, execute for quantum time
+    - if process is not finished, check if there is no new arrivals, then push back
+*/
 RR::RR(ProcessList processList)
 {
-    list<pair<int, int>> idxRemainingTime; // first is idx, second is corresponding remaining time
-    for(int i = 0; i < processList.getNumProcesses(); i++)
-    {
-        idxRemainingTime.push_back(make_pair(i, processList.getDuration(i)));
-    }
-    
-    list<pair<int, int>>::iterator it = idxRemainingTime.begin();
+    queue<int> processQueue;
+    vector<int> remainingTime;
+    vector<bool> scheduled(processList.getNumProcesses(), false); // check if process has been included in queue
+    int incompleteProcesses = processList.getNumProcesses();
     int currentTime = 0;
     avgCompletionTime = 0;
     avgResponseTime = 0;
     avgWaitingTime = 0;
-    while(!idxRemainingTime.empty())
+    
+    for(int i = 0; i < processList.getNumProcesses(); i++)
     {
-        if(it == idxRemainingTime.end())
-        {
-            it = idxRemainingTime.begin();
-        }
-        
-        if(currentTime < processList.getArrivalTime(it->first))
-        {
-            it++;
-            continue;
-        }
+        remainingTime.push_back(processList.getDuration(i));
+    }
 
-        if(it->second == processList.getDuration(it->first))
+    while(incompleteProcesses > 0)
+    {
+        if(processQueue.empty())
         {
-            currentTime = max(currentTime, processList.getArrivalTime(it->first));
-            avgResponseTime += currentTime - processList.getArrivalTime(it->first);
-        }
-        
-        if(it->second > QUANTUM)
-        {
-            it->second -= QUANTUM;
-            currentTime += QUANTUM;
+            for(int i = 0; i < processList.getNumProcesses(); i++)
+            {
+                if((!scheduled[i])&&(processList.getArrivalTime(i) <= currentTime))
+                {
+                    processQueue.push(i);
+                    scheduled[i] = true;
+                    break;
+                }
+            }
         }
         else
         {
-            currentTime += it->second;
-            avgCompletionTime += currentTime - processList.getArrivalTime(it->first);
-            avgWaitingTime += currentTime - processList.getArrivalTime(it->first) - processList.getDuration(it->first);
+            if(remainingTime[processQueue.front()] == processList.getDuration(processQueue.front()))
+            {
+                avgResponseTime += currentTime - processList.getArrivalTime(processQueue.front());
+            }
 
-            list<pair<int, int>>::iterator aux = it;
-            it++;
-            idxRemainingTime.erase(aux);
+            if(remainingTime[processQueue.front()] > QUANTUM)
+            {
+                currentTime += QUANTUM;
+                remainingTime[processQueue.front()] -= QUANTUM;
 
-            continue;
+                for(int i = processQueue.front() + 1; i < processList.getNumProcesses(); i++)
+                {
+                    if(!scheduled[i])
+                    {
+                        if(processList.getArrivalTime(i) <= currentTime)
+                        {
+                            processQueue.push(i);
+                            scheduled[i] = true;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                processQueue.push(processQueue.front());
+                processQueue.pop();
+            }
+            else
+            {
+                currentTime += remainingTime[processQueue.front()];
+                avgCompletionTime += currentTime - processList.getArrivalTime(processQueue.front());
+                avgWaitingTime += currentTime - processList.getArrivalTime(processQueue.front()) -
+                    processList.getDuration(processQueue.front());
+
+                remainingTime[processQueue.front()] = 0;
+                processQueue.pop();
+
+                incompleteProcesses--;
+            }
         }
 
-        it++;
     }
 
     avgCompletionTime /= processList.getNumProcesses();
