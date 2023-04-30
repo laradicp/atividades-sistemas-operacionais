@@ -10,6 +10,12 @@ SJF::SJF(ProcessList processList)
     avgCompletionTime = 0;
     avgResponseTime = 0;
     avgWaitingTime = 0;
+
+    if(processList.getNumProcesses() == 0)
+    {
+        return;
+    }
+
     for(int i = 0; i < processList.getNumProcesses(); i++)
     {
         while(!minDurationIdx.empty() && currentTime < processList.getArrivalTime(i))

@@ -9,6 +9,12 @@ FCFS::FCFS(ProcessList processList)
     avgCompletionTime = 0;
     avgResponseTime = 0;
     avgWaitingTime = 0;
+
+    if(processList.getNumProcesses() == 0)
+    {
+        return;
+    }
+
     for(int i = 0; i < processList.getNumProcesses(); i++)
     {
         currentTime = max(currentTime, processList.getArrivalTime(i));

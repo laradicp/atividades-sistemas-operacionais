@@ -6,16 +6,6 @@
 
 #define QUANTUM 2
 
-/*
-    Brainstorm
-    - if process arrives at same time as another process finishes executing in quantum,
-        process arriving has greater priority
-    - queue of processes
-    - if the queue is empty, then time max(first arrival time, 0)
-    - push processes with arrival time == current time into queue
-    - pop process from queue, execute for quantum time
-    - if process is not finished, check if there is no new arrivals, then push back
-*/
 RR::RR(ProcessList processList)
 {
     queue<int> processQueue;
@@ -26,6 +16,11 @@ RR::RR(ProcessList processList)
     avgCompletionTime = 0;
     avgResponseTime = 0;
     avgWaitingTime = 0;
+
+    if(processList.getNumProcesses() == 0)
+    {
+        return;
+    }
     
     for(int i = 0; i < processList.getNumProcesses(); i++)
     {
@@ -36,13 +31,28 @@ RR::RR(ProcessList processList)
     {
         if(processQueue.empty())
         {
+            bool processAvailable = false;
             for(int i = 0; i < processList.getNumProcesses(); i++)
             {
                 if((!scheduled[i])&&(processList.getArrivalTime(i) <= currentTime))
                 {
                     processQueue.push(i);
                     scheduled[i] = true;
+                    processAvailable = true;
                     break;
+                }
+            }
+
+            // if no processes are available, increment time
+            if(!processAvailable)
+            {
+                for(int i = 0; i < processList.getNumProcesses(); i++)
+                {
+                    if(!scheduled[i])
+                    {
+                        currentTime = processList.getArrivalTime(i);
+                        break;
+                    }
                 }
             }
         }
